@@ -1,0 +1,57 @@
+# Redwood View
+
+A console disk usage viewer in the spirit of SequoiaView: a treemap fills most of the
+window, and an ncdu-style folder list on the right is used for navigation. The selected
+entry is highlighted on the treemap, and blocks are coloured by file type so you can see
+not only which folder is big but what is filling it.
+
+Pure Python standard library (`curses`), so it works on any server you can `ssh` into.
+
+![Home folder overview with the file type legend open](docs/screenshots/overview.png)
+
+Inside a folder: nested blocks of the same type are told apart by a dotted texture.
+
+![Videos folder](docs/screenshots/videos.png)
+
+Without colour (`--no-color`, or a terminal that has none) each file type gets its own
+character instead.
+
+![Monochrome mode](docs/screenshots/nocolor.png)
+
+## Install
+
+```sh
+uv tool install git+https://github.com/Templarrr/redwood_view
+```
+
+or, from a checkout, `uv tool install .`
+
+## Use
+
+```sh
+redwood /          # scan everything
+redwood ~/Videos   # scan one folder
+redwood -x /       # stay on the root filesystem (skip /proc, mounted drives, ...)
+```
+
+Folders that can't be read are skipped and marked with `!` in the list.
+
+| Key                    | Action                    |
+|------------------------|---------------------------|
+| Up / Down, `j` / `k`   | move selection            |
+| PgUp / PgDn, Home / End| jump                      |
+| Right / Enter          | open folder               |
+| Left / Backspace       | go to parent              |
+| `l`                    | toggle file type legend   |
+| `q`                    | quit                      |
+
+Options: `--apparent-size` uses file sizes instead of disk usage, `--no-color` draws
+file types with characters instead of colours.
+
+## Development
+
+```sh
+uv sync
+uv run pytest
+uv run ruff check . && uv run ruff format --check .
+```
