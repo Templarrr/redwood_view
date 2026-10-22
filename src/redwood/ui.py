@@ -9,7 +9,7 @@ from redwood.treemap import Rect, layout
 
 HELP = "↑↓ move  →/Enter open  ←/Bksp up  l legend  q quit"
 HELP_ASCII = "Up/Down move  Right/Enter open  Left/Bksp up  l legend  q quit"
-BAR_WIDTH = 10
+BAR_WIDTH = 8
 
 _HIGHLIGHT_PAIR = len(CATEGORIES) + 1
 
@@ -118,7 +118,7 @@ class App:
             self.text(0, 0, "Terminal too small", width)
             self.screen.refresh()
             return
-        list_w = min(max(width // 3, 34), 60)
+        list_w = min(max(width * 2 // 5, 36), 64)
         map_area = Rect(0, 1, width - list_w - 1, height - 2)
         self.draw_header(width)
         self.draw_treemap(map_area)
@@ -237,9 +237,7 @@ class App:
             bar = "#" * filled + " " * (BAR_WIDTH - filled)
             mark = "!" if node.error else " "
             name = node.name + ("/" if node.is_dir else "")
-            line = (
-                f"{human_size(node.size):>10} {node.size * 100 / total:5.1f}% [{bar}]{mark}{name}"
-            )
+            line = f"{human_size(node.size):>9} {node.size * 100 / total:5.1f}% [{bar}]{mark}{name}"
             attr = curses.A_REVERSE if i == b.index else 0
             self.text(y, area.x + 1, swatch, 2, swatch_attr)
             self.text(y, area.x + 3, line.ljust(area.w), area.w - 3, attr)

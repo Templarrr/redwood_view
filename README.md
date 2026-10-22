@@ -7,6 +7,17 @@ not only which folder is big but what is filling it.
 
 Pure Python standard library (`curses`), so it works on any server you can `ssh` into.
 
+![Home folder overview with the file type legend open](docs/screenshots/overview.png)
+
+Inside a folder: nested blocks of the same type are told apart by a dotted texture.
+
+![Videos folder](docs/screenshots/videos.png)
+
+Without colour (`--no-color`, or a terminal that has none) each file type gets its own
+character instead.
+
+![Monochrome mode](docs/screenshots/nocolor.png)
+
 ## Install
 
 ```sh
