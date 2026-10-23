@@ -18,17 +18,26 @@ def test_squarify_keeps_blocks_squarish():
 
 def test_layout_tiles_area_without_gaps_or_overlap():
     area = Rect(3, 2, 50, 20)
-    rects = layout([500, 300, 120, 50, 20, 10], area)
+    rects, rest = layout([500, 300, 120, 50, 20, 10], area)
+    assert rest.w * rest.h == 0
     cells = [(x, y) for r in rects for x in range(r.x, r.x + r.w) for y in range(r.y, r.y + r.h)]
     assert len(cells) == len(set(cells)) == area.w * area.h
     assert all(area.x <= x < area.x + area.w and area.y <= y < area.y + area.h for x, y in cells)
 
 
-def test_layout_drops_items_too_small_to_draw():
-    rects = layout([1_000_000, 1], Rect(0, 0, 10, 5))
-    assert rects[1].w * rects[1].h == 0
+def test_layout_merges_items_too_small_to_draw():
+    area = Rect(0, 0, 40, 20)
+    rects, rest = layout([1_000_000] + [1] * 1000, area)
+    assert len(rects) == 1
+    assert rest.w * rest.h == 0
+    rects, rest = layout([1000] + [1] * 1000, area)
+    assert len(rects) == 1
+    # Each item alone is under a cell, but together they cover half the map.
+    assert rects[0].w * rects[0].h + rest.w * rest.h == area.w * area.h
+    assert rest.w * rest.h == pytest.approx(400, rel=0.1)
 
 
 @pytest.mark.parametrize("sizes", [[], [0, 0]])
 def test_layout_with_nothing_to_draw(sizes):
-    assert all(r.w * r.h == 0 for r in layout(sizes, Rect(0, 0, 10, 10)))
+    rects, rest = layout(sizes, Rect(0, 0, 10, 10))
+    assert all(r.w * r.h == 0 for r in rects + [rest])

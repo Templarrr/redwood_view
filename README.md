@@ -9,7 +9,9 @@ Pure Python standard library (`curses`), so it works on any server you can `ssh`
 
 ![Home folder overview with the file type legend open](docs/screenshots/overview.png)
 
-Inside a folder: nested blocks of the same type are told apart by a dotted texture.
+Inside a folder: nested blocks of the same type are told apart by a dotted texture. Files too
+small to get a cell of their own are merged into one block labelled "+N small items",
+which keeps folders with tens of thousands of files quick to draw.
 
 ![Videos folder](docs/screenshots/videos.png)
 

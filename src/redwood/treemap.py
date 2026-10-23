@@ -27,16 +27,18 @@ def squarify(
             rects.extend([(x, y, 0.0, 0.0)] * (len(areas) - i))
             break
         short = min(w, h)
+        # Sizes are sorted, so the row's largest area is its first and the smallest its last;
+        # that keeps each aspect-ratio check O(1) instead of rescanning the row.
         row = [areas[i]]
+        row_sum = areas[i]
         i += 1
-        while (
-            i < len(areas)
-            and areas[i] > 0
-            and _worst(row + [areas[i]], short) <= _worst(row, short)
-        ):
+        while i < len(areas) and areas[i] > 0:
+            grown = row_sum + areas[i]
+            if _worst(grown, row[0], areas[i], short) > _worst(row_sum, row[0], row[-1], short):
+                break
             row.append(areas[i])
+            row_sum = grown
             i += 1
-        row_sum = sum(row)
         if w >= h:
             col_w = row_sum / h
             cy = y
@@ -56,15 +58,36 @@ def squarify(
     return rects
 
 
-def _worst(row: list[float], short: float) -> float:
-    total = sum(row)
-    return max(
-        max(short * short * a / (total * total), total * total / (short * short * a)) for a in row
-    )
+def _worst(total: float, largest: float, smallest: float, short: float) -> float:
+    side2 = short * short
+    total2 = total * total
+    return max(side2 * largest / total2, total2 / (side2 * smallest))
 
 
-def layout(sizes: list[float], area: Rect) -> list[Rect]:
-    """Lay sizes out on the character grid; items too small for a cell get a zero-sized rect."""
+def layout(sizes: list[float], area: Rect) -> tuple[list[Rect], Rect]:
+    """Lay sizes out on the character grid.
+
+    Items too small to get a cell of their own are merged into one block, so huge folders cost
+    no more than the screen can show. Returns rects for the leading, visible items (possibly
+    fewer than `sizes`) and the merged block's rect, which is empty when nothing was merged.
+    """
+    total = sum(sizes)
+    cells = area.w * area.h
+    if total <= 0 or cells <= 0:
+        return [Rect(area.x, area.y, 0, 0)] * len(sizes), Rect(area.x, area.y, 0, 0)
+    shown = 0
+    while shown < len(sizes) and sizes[shown] * cells >= total:
+        shown += 1
+    if shown == len(sizes):
+        return _grid(sizes, area), Rect(area.x, area.y, 0, 0)
+    rest = total - sum(sizes[:shown])
+    # Squarify wants descending sizes, so the merged block goes in at its sorted position.
+    pos = next((i for i in range(shown) if sizes[i] < rest), shown)
+    rects = _grid(sizes[:pos] + [rest] + sizes[pos:shown], area)
+    return rects, rects.pop(pos)
+
+
+def _grid(sizes: list[float], area: Rect) -> list[Rect]:
     rects = squarify(sizes, 0.0, 0.0, float(area.w), area.h * CELL_ASPECT)
     result = []
     # Rounding shared edges the same way keeps neighbours from overlapping or leaving gaps.
