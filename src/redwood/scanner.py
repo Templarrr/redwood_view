@@ -70,7 +70,7 @@ def scan(
                 continue
             count += 1
             if stat.S_ISDIR(st.st_mode):
-                if one_file_system and st.st_dev != root_dev:
+                if one_file_system and _device(entry, st) != root_dev:
                     continue
                 child = _dir_node(entry.name, node)
                 stack.append((child, entry.path))
@@ -101,6 +101,11 @@ def scan(
         if node.size:
             node.category = max(range(len(CATEGORIES)), key=node.cat_sizes.__getitem__)
     return root_node
+
+
+def _device(entry: os.DirEntry, st: os.stat_result) -> int:
+    # On Windows DirEntry.stat() leaves st_dev at 0, so ask os.stat for the real one.
+    return os.stat(entry.path, follow_symlinks=False).st_dev if os.name == "nt" else st.st_dev
 
 
 def _size(st: os.stat_result, apparent_size: bool) -> int:

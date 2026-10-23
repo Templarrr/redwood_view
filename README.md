@@ -6,6 +6,7 @@ entry is highlighted on the treemap, and blocks are coloured by file type so you
 not only which folder is big but what is filling it.
 
 Pure Python standard library (`curses`), so it works on any server you can `ssh` into.
+Runs on Linux, macOS and Windows.
 
 ![Home folder overview with the file type legend open](https://raw.githubusercontent.com/Templarrr/redwood_view/main/docs/screenshots/overview.png)
 
@@ -27,6 +28,10 @@ uv tool install redwood-view
 ```
 
 or `pipx install redwood-view`. Either puts the `redwood` command on your `PATH`.
+
+On Windows, Python has no built-in `curses`, so the
+[`windows-curses`](https://pypi.org/project/windows-curses/) package is installed along with
+it automatically. It ships for x86 and x64 Python only, so on ARM Windows use an x64 Python.
 
 To get the latest unreleased code instead, install from the repo:
 `uv tool install git+https://github.com/Templarrr/redwood_view`, or from a checkout,
@@ -54,6 +59,7 @@ From a checkout, `git pull` and then `uv tool install --reinstall .`
 redwood /          # scan everything
 redwood ~/Videos   # scan one folder
 redwood -x /       # stay on the root filesystem (skip /proc, mounted drives, ...)
+redwood C:\        # on Windows, scan a whole drive
 ```
 
 Folders that can't be read are skipped and marked with `!` in the list.

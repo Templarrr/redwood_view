@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pytest
 
@@ -35,9 +36,13 @@ def test_size_per_file_type(make_tree):
 
 def test_disk_usage_is_default(make_tree):
     root = scan(make_tree({"a": 1}))
-    assert root.size == os.stat(root.path + "/a").st_blocks * 512
+    st = os.stat(os.path.join(root.path, "a"))
+    # Windows reports no block count, so disk usage falls back to the file size there.
+    expected = st.st_blocks * 512 if hasattr(st, "st_blocks") else st.st_size
+    assert root.size == expected
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="os.scandir reports no link count on Windows")
 def test_hard_links_counted_once(make_tree):
     path = make_tree({"a": 1000})
     os.link(path / "a", path / "b")
@@ -65,6 +70,12 @@ def test_unreadable_folder_is_skipped(make_tree, monkeypatch):
     root = scan(path, apparent_size=True)
     locked = next(c for c in root.children if c.name == "locked")
     assert locked.error
+    assert root.size == 100
+
+
+def test_one_file_system_keeps_subfolders_on_same_drive(make_tree):
+    root = scan(make_tree({"sub/a": 100}), one_file_system=True, apparent_size=True)
+    assert names(root) == ["sub"]
     assert root.size == 100
 
 

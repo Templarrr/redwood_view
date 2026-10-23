@@ -31,8 +31,16 @@ class _Progress:
         if now - self.last < 0.1:
             return
         self.last = now
-        width = os.get_terminal_size(sys.stderr.fileno()).columns if sys.stderr.isatty() else 80
-        line = f"Scanning: {count} items  {path}"
+        self._show(f"Scanning: {count} items  {path}")
+
+    def clear(self) -> None:
+        # Overwrite with spaces: the classic Windows console prints ANSI erase codes as-is.
+        self._show("")
+        sys.stderr.write("\r")
+        sys.stderr.flush()
+
+    def _show(self, line: str) -> None:
+        width = os.get_terminal_size(sys.stderr.fileno()).columns
         sys.stderr.write("\r" + line[: width - 1].ljust(width - 1))
         sys.stderr.flush()
 
@@ -50,7 +58,7 @@ def main(argv: list[str] | None = None) -> None:
     except OSError as e:
         sys.exit(f"redwood: {e}")
     if progress:
-        sys.stderr.write("\r\033[K")
+        progress.clear()
 
     if not sys.stdout.isatty():
         print(f"{human_size(root.size)}\t{root.path}")
