@@ -26,6 +26,22 @@ uv tool install git+https://github.com/Templarrr/redwood_view
 
 or, from a checkout, `uv tool install .`
 
+## Update
+
+```sh
+uv tool upgrade redwood-view
+```
+
+This fetches the latest commit from the repo, even when the version number hasn't
+changed. If you installed a pinned commit or tag (`...redwood_view@<ref>`), the pin is
+kept, so install again without it instead:
+
+```sh
+uv tool install --reinstall git+https://github.com/Templarrr/redwood_view
+```
+
+From a checkout, `git pull` and then `uv tool install --reinstall .`
+
 ## Use
 
 ```sh
