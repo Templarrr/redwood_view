@@ -4,6 +4,7 @@ import locale
 from redwood.browser import Browser
 from redwood.categories import CATEGORIES, OTHER
 from redwood.humanize import human_size
+from redwood.keys import read_key
 from redwood.scanner import Node
 from redwood.treemap import Rect, layout
 
@@ -67,7 +68,7 @@ class App:
         curses.curs_set(0)
         while True:
             self.draw()
-            key = self.screen.getch()
+            key = read_key(self.screen)
             if key in (ord("q"), ord("Q")):
                 return
             self.handle(key)

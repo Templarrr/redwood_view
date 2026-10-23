@@ -45,6 +45,9 @@ Folders that can't be read are skipped and marked with `!` in the list.
 | `l`                    | toggle file type legend   |
 | `q`                    | quit                      |
 
+Letter keys work by position on Russian, Ukrainian, Belarusian and Greek layouts too,
+so `й` acts as `q` without switching to English.
+
 Options: `--apparent-size` uses file sizes instead of disk usage, `--no-color` draws
 file types with characters instead of colours.
 
