@@ -63,6 +63,7 @@ class App:
         self._tiles_key = None
         self._tiles: list[tuple[Rect, int, bool]] = []
         self._top_rects: list[Rect] = []
+        self._rest_rect = Rect(0, 0, 0, 0)
 
     def run(self) -> None:
         curses.curs_set(0)
@@ -156,9 +157,10 @@ class App:
         key = (id(cur), area)
         if key != self._tiles_key:
             self._tiles = []
-            self._top_rects = layout([c.size for c in cur.children], area)
-            for i, (child, rect) in enumerate(zip(cur.children, self._top_rects, strict=True)):
+            self._top_rects, self._rest_rect = layout([c.size for c in cur.children], area)
+            for i, (child, rect) in enumerate(zip(cur.children, self._top_rects, strict=False)):
                 self._collect(child, _frame_inner(child, rect), i % 2 == 1)
+            self._add_rest_tile(self._rest_rect, cur, len(self._top_rects))
             self._tiles_key = key
 
         for rect, category, alt in self._tiles:
@@ -166,7 +168,12 @@ class App:
             for row in range(rect.y, rect.y + rect.h):
                 self.text(row, rect.x, char * rect.w, rect.w, attr)
 
-        for i, (child, rect) in enumerate(zip(cur.children, self._top_rects, strict=True)):
+        rest = self._rest_rect
+        if rest.w >= 6:
+            label = f"+{len(cur.children) - len(self._top_rects)} small items"
+            self.text(rest.y, rest.x, label, rest.w, curses.A_BOLD)
+
+        for i, (child, rect) in enumerate(zip(cur.children, self._top_rects, strict=False)):
             if not rect.w or not rect.h:
                 continue
             selected = i == self.browser.index
@@ -196,9 +203,15 @@ class App:
         if not node.is_dir or not node.size or rect.w * rect.h < 2:
             self._tiles.append((rect, node.category, alt))
             return
-        rects = layout([c.size for c in node.children], rect)
-        for i, (child, child_rect) in enumerate(zip(node.children, rects, strict=True)):
+        rects, rest = layout([c.size for c in node.children], rect)
+        for i, (child, child_rect) in enumerate(zip(node.children, rects, strict=False)):
             self._collect(child, child_rect, alt ^ (i % 2 == 1))
+        self._add_rest_tile(rest, node, len(rects), alt)
+
+    def _add_rest_tile(self, rect: Rect, parent: Node, index: int, alt: bool = False) -> None:
+        # The parent's dominant type is close enough for a block of items too small to see.
+        if rect.w and rect.h:
+            self._tiles.append((rect, parent.category, alt ^ (index % 2 == 1)))
 
     def draw_frame(self, r: Rect, attr: int) -> None:
         s = self.screen
