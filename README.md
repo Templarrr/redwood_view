@@ -7,36 +7,40 @@ not only which folder is big but what is filling it.
 
 Pure Python standard library (`curses`), so it works on any server you can `ssh` into.
 
-![Home folder overview with the file type legend open](docs/screenshots/overview.png)
+![Home folder overview with the file type legend open](https://raw.githubusercontent.com/Templarrr/redwood_view/main/docs/screenshots/overview.png)
 
 Inside a folder: nested blocks of the same type are told apart by a dotted texture. Files too
 small to get a cell of their own are merged into one block labelled "+N small items",
 which keeps folders with tens of thousands of files quick to draw.
 
-![Videos folder](docs/screenshots/videos.png)
+![Videos folder](https://raw.githubusercontent.com/Templarrr/redwood_view/main/docs/screenshots/videos.png)
 
 Without colour (`--no-color`, or a terminal that has none) each file type gets its own
 character instead.
 
-![Monochrome mode](docs/screenshots/nocolor.png)
+![Monochrome mode](https://raw.githubusercontent.com/Templarrr/redwood_view/main/docs/screenshots/nocolor.png)
 
 ## Install
 
 ```sh
-uv tool install git+https://github.com/Templarrr/redwood_view
+uv tool install redwood-view
 ```
 
-or, from a checkout, `uv tool install .`
+or `pipx install redwood-view`. Either puts the `redwood` command on your `PATH`.
+
+To get the latest unreleased code instead, install from the repo:
+`uv tool install git+https://github.com/Templarrr/redwood_view`, or from a checkout,
+`uv tool install .`
 
 ## Update
 
 ```sh
-uv tool upgrade redwood-view
+uv tool upgrade redwood-view   # or: pipx upgrade redwood-view
 ```
 
-This fetches the latest commit from the repo, even when the version number hasn't
-changed. If you installed a pinned commit or tag (`...redwood_view@<ref>`), the pin is
-kept, so install again without it instead:
+If you installed from the repo, the same command fetches the latest commit, even when the
+version number hasn't changed. A pinned commit or tag (`...redwood_view@<ref>`) stays
+pinned, so install again without it instead:
 
 ```sh
 uv tool install --reinstall git+https://github.com/Templarrr/redwood_view
@@ -76,3 +80,16 @@ uv sync
 uv run pytest
 uv run ruff check . && uv run ruff format --check .
 ```
+
+### Releasing
+
+Bump the version with `uv version --bump minor` (or `patch`, `major`), commit, then push a
+matching tag:
+
+```sh
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The release workflow checks that the tag matches the version in `pyproject.toml`, runs
+the tests, builds the package and publishes it to PyPI.
