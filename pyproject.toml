@@ -7,7 +7,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Mykhailo Odintsov" }]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["windows-curses>=2.3; sys_platform == 'win32'"]
 keywords = ["disk usage", "treemap", "ncdu", "diskonaut", "sequoiaview", "curses", "tui"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -15,6 +15,7 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "Intended Audience :: End Users/Desktop",
     "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
