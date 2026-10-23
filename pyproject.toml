@@ -5,10 +5,10 @@ description = "Console disk usage viewer: a treemap with an ncdu-style folder li
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-authors = [{ name = "Michael" }]
+authors = [{ name = "Mykhailo Odintsov" }]
 requires-python = ">=3.10"
 dependencies = []
-keywords = ["disk usage", "treemap", "ncdu", "sequoiaview", "curses", "tui"]
+keywords = ["disk usage", "treemap", "ncdu", "diskonaut", "sequoiaview", "curses", "tui"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console :: Curses",
