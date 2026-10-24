@@ -1,5 +1,6 @@
 import curses
 import locale
+import sys
 
 from redwood.browser import Browser
 from redwood.categories import CATEGORIES, OTHER
@@ -58,7 +59,7 @@ class App:
         self.styles = Styles(color)
         self.show_legend = False
         self.list_top = 0
-        self.encoding = screen.encoding or locale.getpreferredencoding()
+        self.encoding = _screen_encoding(screen)
         self.unicode = "utf" in self.encoding.lower()
         self.unreadable = _count_errors(root)
         self._tiles_key = None
@@ -286,6 +287,14 @@ class App:
             swatch, attr = self.styles.swatch(i)
             self.text(box.y + 1 + row, box.x + 2, swatch, 2, attr)
             self.text(box.y + 1 + row, box.x + 5, line, box.w - 6)
+
+
+def _screen_encoding(screen) -> str:
+    # On Windows curses reports the console code page (often cp437), but windows-curses
+    # writes wide strings straight to the console, so any character can be shown.
+    if sys.platform == "win32":
+        return "utf-8"
+    return screen.encoding or locale.getpreferredencoding()
 
 
 def _frame_inner(node: Node, rect: Rect) -> Rect:

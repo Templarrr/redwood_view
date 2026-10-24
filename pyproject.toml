@@ -1,6 +1,6 @@
 [project]
 name = "redwood-view"
-version = "0.2.0"
+version = "0.2.1"
 description = "Console disk usage viewer: a treemap with an ncdu-style folder list"
 readme = "README.md"
 license = "Apache-2.0"

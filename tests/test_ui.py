@@ -43,3 +43,21 @@ def test_undecodable_name_shown_with_placeholder(tmp_path):
     app = App(FakeScreen(), root, color=False)
     app.text(0, 0, root.children[0].name, 20)
     assert app.screen.writes == [(0, 0, "bad?name")]
+
+
+def test_windows_console_code_page_does_not_hide_cyrillic(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "platform", "win32")
+    screen = FakeScreen()
+    screen.encoding = "cp437"
+    app = App(screen, scan(str(tmp_path)), color=False)
+    app.text(0, 0, "Документи та фото", 40)
+    assert screen.writes == [(0, 0, "Документи та фото")]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows ignores the code page")
+def test_characters_the_terminal_cannot_encode_become_placeholders(tmp_path):
+    screen = FakeScreen()
+    screen.encoding = "ascii"
+    app = App(screen, scan(str(tmp_path)), color=False)
+    app.text(0, 0, "Дом.txt", 20)
+    assert screen.writes == [(0, 0, "???.txt")]

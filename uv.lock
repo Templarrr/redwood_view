@@ -79,7 +79,7 @@ wheels = [
 
 [[package]]
 name = "redwood-view"
-version = "0.1.0"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "windows-curses", marker = "sys_platform == 'win32'" },
