@@ -42,7 +42,6 @@ def test_disk_usage_is_default(make_tree):
     assert root.size == expected
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="os.scandir reports no link count on Windows")
 def test_hard_links_counted_once(make_tree):
     path = make_tree({"a": 1000})
     os.link(path / "a", path / "b")
@@ -54,6 +53,28 @@ def test_symlinks_not_followed(make_tree):
     os.symlink(path / "real", path / "link")
     root = scan(path, apparent_size=True)
     assert root.size < 2000
+
+
+def test_symlink_loop_does_not_hang(make_tree):
+    path = make_tree({"sub/a": 1000})
+    os.symlink(path, path / "sub" / "back", target_is_directory=True)
+    assert scan(path, apparent_size=True).size < 2000
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="junctions only exist on Windows")
+def test_junction_loop_does_not_hang(make_tree):
+    import _winapi
+
+    path = make_tree({"sub/a": 1000})
+    _winapi.CreateJunction(str(path), str(path / "sub" / "back"))
+    assert scan(path, apparent_size=True).size < 2000
+
+
+def test_non_latin_names_kept(make_tree):
+    root = scan(make_tree({"Документи/日本語.txt": 10, "café.mp3": 10}), apparent_size=True)
+    assert sorted(names(root)) == sorted(["Документи", "café.mp3"])
+    docs = next(c for c in root.children if c.is_dir)
+    assert names(docs) == ["日本語.txt"]
 
 
 def test_unreadable_folder_is_skipped(make_tree, monkeypatch):

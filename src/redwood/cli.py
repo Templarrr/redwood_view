@@ -3,6 +3,7 @@ import os
 import sys
 import time
 
+from redwood.cells import fit
 from redwood.humanize import human_size
 from redwood.scanner import scan
 
@@ -41,7 +42,7 @@ class _Progress:
 
     def _show(self, line: str) -> None:
         width = os.get_terminal_size(sys.stderr.fileno()).columns
-        sys.stderr.write("\r" + line[: width - 1].ljust(width - 1))
+        sys.stderr.write("\r" + fit(line, width - 1))
         sys.stderr.flush()
 
 
@@ -61,6 +62,8 @@ def main(argv: list[str] | None = None) -> None:
         progress.clear()
 
     if not sys.stdout.isatty():
+        # Names may hold bytes the locale can't encode; print them escaped rather than crash.
+        sys.stdout.reconfigure(errors="backslashreplace")
         print(f"{human_size(root.size)}\t{root.path}")
         return
 
