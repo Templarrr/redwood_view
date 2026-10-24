@@ -3,6 +3,7 @@ import locale
 
 from redwood.browser import Browser
 from redwood.categories import CATEGORIES, OTHER
+from redwood.cells import cell_width, clip, fit
 from redwood.humanize import human_size
 from redwood.keys import read_key
 from redwood.scanner import Node
@@ -103,15 +104,20 @@ class App:
     def toggle_legend(self) -> None:
         self.show_legend = not self.show_legend
 
-    def text(self, y: int, x: int, s: str, width: int, attr: int = 0) -> None:
+    def text(self, y: int, x: int, s: str, width: int, attr: int = 0, pad: bool = False) -> None:
         if width <= 0:
             return
-        s = s.encode(self.encoding, "replace").decode(self.encoding)
-        s = "".join(c if c.isprintable() else "?" for c in s)
+        s = self.printable(s)
+        s = fit(s, width) if pad else clip(s, width)
         try:
-            self.screen.addnstr(y, x, s, width, attr)
+            self.screen.addstr(y, x, s, attr)
         except curses.error:
             pass  # writing the bottom-right cell moves the cursor off-screen
+
+    def printable(self, s: str) -> str:
+        # Also turns undecodable bytes in names (surrogate escapes) into "?".
+        s = s.encode(self.encoding, "replace").decode(self.encoding)
+        return "".join(c if c.isprintable() else "?" for c in s)
 
     def draw(self) -> None:
         self.screen.erase()
@@ -128,13 +134,8 @@ class App:
         self.draw_list(Rect(width - list_w, 1, list_w, height - 2))
         if self.show_legend:
             self.draw_legend(map_area)
-        self.text(
-            height - 1,
-            0,
-            (HELP if self.unicode else HELP_ASCII).ljust(width),
-            width,
-            curses.A_REVERSE,
-        )
+        help_line = HELP if self.unicode else HELP_ASCII
+        self.text(height - 1, 0, help_line, width, curses.A_REVERSE, pad=True)
         self.screen.refresh()
 
     def draw_header(self, width: int) -> None:
@@ -143,7 +144,7 @@ class App:
         if self.unreadable:
             right = f" {self.unreadable} unreadable |" + right
         left = f" redwood  {cur.path}"
-        line = left[: max(0, width - len(right))].ljust(width - len(right)) + right
+        line = fit(self.printable(left), max(0, width - cell_width(right))) + right
         self.text(0, 0, line, width, curses.A_REVERSE)
 
     def draw_separator(self, x: int, y: int, h: int) -> None:
@@ -254,7 +255,7 @@ class App:
             line = f"{human_size(node.size):>9} {node.size * 100 / total:5.1f}% [{bar}]{mark}{name}"
             attr = curses.A_REVERSE if i == b.index else 0
             self.text(y, area.x + 1, swatch, 2, swatch_attr)
-            self.text(y, area.x + 3, line.ljust(area.w), area.w - 3, attr)
+            self.text(y, area.x + 3, line, area.w - 3, attr, pad=True)
 
     def draw_legend(self, area: Rect) -> None:
         cur = self.browser.current

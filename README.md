@@ -77,7 +77,9 @@ Letter keys work by position on Russian, Ukrainian, Belarusian and Greek layouts
 so `й` acts as `q` without switching to English.
 
 Options: `--apparent-size` uses file sizes instead of disk usage, `--no-color` draws
-file types with characters instead of colours.
+file types with characters instead of colours. Hard links are counted once on Linux and
+macOS; on Windows that needs an extra check per file, so it's off unless you pass
+`--windows-hard-links`.
 
 ## Development
 

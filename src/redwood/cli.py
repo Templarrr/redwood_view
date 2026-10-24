@@ -3,6 +3,7 @@ import os
 import sys
 import time
 
+from redwood.cells import fit
 from redwood.humanize import human_size
 from redwood.scanner import scan
 
@@ -17,6 +18,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--apparent-size", action="store_true", help="use file sizes instead of disk usage"
+    )
+    parser.add_argument(
+        "--windows-hard-links",
+        action="store_true",
+        help="count hard links once on Windows too (slower scan there)",
     )
     parser.add_argument("--no-color", action="store_true", help="draw with characters only")
     return parser.parse_args(argv)
@@ -41,7 +47,7 @@ class _Progress:
 
     def _show(self, line: str) -> None:
         width = os.get_terminal_size(sys.stderr.fileno()).columns
-        sys.stderr.write("\r" + line[: width - 1].ljust(width - 1))
+        sys.stderr.write("\r" + fit(line, width - 1))
         sys.stderr.flush()
 
 
@@ -52,7 +58,13 @@ def main(argv: list[str] | None = None) -> None:
 
     progress = _Progress() if sys.stderr.isatty() else None
     try:
-        root = scan(args.path, args.one_file_system, args.apparent_size, progress)
+        root = scan(
+            args.path,
+            args.one_file_system,
+            args.apparent_size,
+            progress,
+            windows_hard_links=args.windows_hard_links,
+        )
     except KeyboardInterrupt:
         sys.exit(130)
     except OSError as e:
@@ -61,6 +73,8 @@ def main(argv: list[str] | None = None) -> None:
         progress.clear()
 
     if not sys.stdout.isatty():
+        # Names may hold bytes the locale can't encode; print them escaped rather than crash.
+        sys.stdout.reconfigure(errors="backslashreplace")
         print(f"{human_size(root.size)}\t{root.path}")
         return
 

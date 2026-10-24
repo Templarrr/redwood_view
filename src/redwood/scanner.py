@@ -4,6 +4,9 @@ from collections.abc import Callable
 
 from redwood.categories import CATEGORIES, OTHER, categorize
 
+# Only defined in the stat module on Windows.
+_IO_REPARSE_TAG_MOUNT_POINT = 0xA0000003
+
 
 class Node:
     __slots__ = ("name", "parent", "size", "children", "category", "cat_sizes", "error")
@@ -43,14 +46,17 @@ def scan(
     one_file_system: bool = False,
     apparent_size: bool = False,
     progress: Callable[[int, str], None] | None = None,
+    windows_hard_links: bool = False,
 ) -> Node:
     root = os.path.abspath(root)
-    root_dev = os.stat(root).st_dev
+    root_st = os.stat(root)
+    root_dev = root_st.st_dev
     root_node = _dir_node(root, None)
     # Iterative walk so very deep trees can't hit the recursion limit.
     stack = [(root_node, root)]
     visited: list[Node] = []
     seen_inodes: set[tuple[int, int]] = set()
+    seen_dirs = {(root_st.st_dev, root_st.st_ino)}
     count = 0
 
     while stack:
@@ -69,12 +75,22 @@ def scan(
             except OSError:
                 continue
             count += 1
-            if stat.S_ISDIR(st.st_mode):
+            if stat.S_ISDIR(st.st_mode) and not _is_junction(st):
                 if one_file_system and _device(entry, st) != root_dev:
                     continue
+                # Bind mounts and macOS directory hard links can lead back to a folder we've seen.
+                # Windows leaves st_ino at 0 here, but junctions already cover loops there.
+                if st.st_ino:
+                    key = (st.st_dev, st.st_ino)
+                    if key in seen_dirs:
+                        continue
+                    seen_dirs.add(key)
                 child = _dir_node(entry.name, node)
                 stack.append((child, entry.path))
             else:
+                # Off by default: it costs an extra system call per file on Windows.
+                if windows_hard_links and os.name == "nt":
+                    st = _full_stat(entry, st)
                 # Hard links share storage, so only count the first one we meet.
                 if st.st_nlink > 1:
                     key = (st.st_dev, st.st_ino)
@@ -101,6 +117,19 @@ def scan(
         if node.size:
             node.category = max(range(len(CATEGORIES)), key=node.cat_sizes.__getitem__)
     return root_node
+
+
+def _is_junction(st: os.stat_result) -> bool:
+    # Windows reports junctions as plain folders, so following them could loop forever.
+    return getattr(st, "st_reparse_tag", 0) == _IO_REPARSE_TAG_MOUNT_POINT
+
+
+def _full_stat(entry: os.DirEntry, st: os.stat_result) -> os.stat_result:
+    # DirEntry.stat() on Windows has no link count or file id, which hard link checks need.
+    try:
+        return os.stat(entry.path, follow_symlinks=False)
+    except OSError:
+        return st
 
 
 def _device(entry: os.DirEntry, st: os.stat_result) -> int:
