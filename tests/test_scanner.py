@@ -42,10 +42,17 @@ def test_disk_usage_is_default(make_tree):
     assert root.size == expected
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="opt-in on Windows, see the test below")
 def test_hard_links_counted_once(make_tree):
     path = make_tree({"a": 1000})
     os.link(path / "a", path / "b")
     assert scan(path, apparent_size=True).size == 1000
+
+
+def test_hard_links_counted_once_with_windows_check(make_tree):
+    path = make_tree({"a": 1000})
+    os.link(path / "a", path / "b")
+    assert scan(path, apparent_size=True, windows_hard_links=True).size == 1000
 
 
 def test_symlinks_not_followed(make_tree):

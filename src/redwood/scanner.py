@@ -46,6 +46,7 @@ def scan(
     one_file_system: bool = False,
     apparent_size: bool = False,
     progress: Callable[[int, str], None] | None = None,
+    windows_hard_links: bool = False,
 ) -> Node:
     root = os.path.abspath(root)
     root_st = os.stat(root)
@@ -87,7 +88,8 @@ def scan(
                 child = _dir_node(entry.name, node)
                 stack.append((child, entry.path))
             else:
-                if os.name == "nt":
+                # Off by default: it costs an extra system call per file on Windows.
+                if windows_hard_links and os.name == "nt":
                     st = _full_stat(entry, st)
                 # Hard links share storage, so only count the first one we meet.
                 if st.st_nlink > 1:

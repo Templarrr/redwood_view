@@ -19,6 +19,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--apparent-size", action="store_true", help="use file sizes instead of disk usage"
     )
+    parser.add_argument(
+        "--windows-hard-links",
+        action="store_true",
+        help="count hard links once on Windows too (slower scan there)",
+    )
     parser.add_argument("--no-color", action="store_true", help="draw with characters only")
     return parser.parse_args(argv)
 
@@ -53,7 +58,13 @@ def main(argv: list[str] | None = None) -> None:
 
     progress = _Progress() if sys.stderr.isatty() else None
     try:
-        root = scan(args.path, args.one_file_system, args.apparent_size, progress)
+        root = scan(
+            args.path,
+            args.one_file_system,
+            args.apparent_size,
+            progress,
+            windows_hard_links=args.windows_hard_links,
+        )
     except KeyboardInterrupt:
         sys.exit(130)
     except OSError as e:
