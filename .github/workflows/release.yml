@@ -38,5 +38,5 @@ jobs:
         with:
           name: dist
           path: dist/
-      - uses: astral-sh/setup-uv@v6
-      - run: uv publish --trusted-publishing always
+      # pypa's action signs and uploads PEP 740 attestations; uv publish does not.
+      - uses: pypa/gh-action-pypi-publish@release/v1
